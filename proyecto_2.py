@@ -19,12 +19,15 @@ def noHiddenDir():
             dir.remove(elemento)
         return dir
     except:
-        return "No tiene permisos para acceder a esta carpeta"
+        return "Acceso denegado"
 
 def CurSelet(event):
-    widget = event.widget
-    value = str((widget.get(widget.curselection())))
-    return value
+    try:
+        widget = event.widget
+        value = str((widget.get(widget.curselection())))
+        return value
+    except:
+        pass
 
 def show_error(self, *args):
     messagebox.showerror('Exception',"No ha seleccionado nada")
@@ -56,6 +59,38 @@ def obtenerTamaños(directorios):
         resultado.append(size)
     return resultado
 
+def separarArchivosCarpetas(directorios):
+    resultado = directorios.copy()
+    for elemento in directorios:
+        if not os.path.isdir(os.path.join(os.getcwd(),elemento)):
+            resultado.remove(elemento)
+            resultado.append(elemento)
+    return resultado
+
+def get_extension(path):
+    try:
+        path = path[-4:]
+        extention = path.split('.')[1]
+    except:
+        extention = ""
+    return extention
+
+def directorioAnterior(path):
+    slash = 0
+    for i in range(len(path)):
+        if path[i] == "\\":
+            slash = i
+    newPath = path[:slash]
+    return newPath
+
+def obtenerExtensiones(directorios):
+    resultado = []
+    for elemento in directorios:
+        path = os.path.join(os.getcwd(),elemento)
+        extension = get_extension(path)
+        resultado.append(extension)
+    return resultado
+
 def entrarEnDirectorio(directorio,ord="n"):
     for child in cRight.winfo_children():#Borrar directorios anteriores de la ventana
         child.destroy()
@@ -69,18 +104,17 @@ def entrarEnDirectorio(directorio,ord="n"):
         if ord == "n":
             directorios.sort(key = lambda k : k.lower())
 
-    for elemento in directorios:#separar carpetas de archivos
-        if os.path.isdir(os.path.join(os.getcwd(),elemento)) == False:
-            directorios.remove(elemento)
-            directorios.append(elemento)
+        directorios = separarArchivosCarpetas(directorios)
     tamaños = obtenerTamaños(directorios)
+    extensiones = obtenerExtensiones(directorios)
 
     #listas de directorios,tamaños,etc
     lista = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=30,font=("Arial","12"))
     listaTamaño = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=8,font=("Arial","12"))
+    listaExtension = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=10,font=("Arial","12"))
     cwd = Label(cRight, text=os.getcwd(), bg="#ada6a6", font=("Arial", "12")).place(x=210, y=10)
     acciones = Label(cLeft, text="Acciones", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=70)
-    ordenar = Label(cLeft, text="Ordenar por", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=310)
+    ordenar = Label(cLeft, text="Ordenar por", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=345)
     scroll = Scrollbar(cRight, orient=VERTICAL)
     scroll.pack(side=RIGHT, fill=Y)
     lista.config(yscrollcommand=scroll.set)
@@ -103,12 +137,14 @@ def entrarEnDirectorio(directorio,ord="n"):
     eliminar.place(x=8,y=234,width=185)
     copiar = Button(cLeft,text="Copiar",bg="#ada6a6",font=("Arial", "12"))
     copiar.place(x=8,y=270,width=185)
+    atras = Button(cLeft, text="Atrás", bg="#ada6a6",command=lambda: entrarEnDirectorio(directorioAnterior(os.getcwd())), font=("Arial", "12"))
+    atras.place(x=8, y=305, width=185)
     nombre = Button(cLeft,text="Nombre",bg="#ada6a6",command= lambda : entrarEnDirectorio(directorio),font=("Arial", "12"))
-    nombre.place(x=8,y=335,width=73)
+    nombre.place(x=8,y=370,width=73)
     tamaño = Button(cLeft, text="Tamaño", bg="#ada6a6",command= lambda : entrarEnDirectorio(directorio,"t"), font=("Arial", "12"))
-    tamaño.place(x=8, y=370,width=73)
+    tamaño.place(x=8, y=405,width=73)
     tipo = Button(cLeft, text="Tipo", bg="#ada6a6",command= lambda : entrarEnDirectorio(directorio,""), font=("Arial", "12"))
-    tipo.place(x=8, y=405,width=73)
+    tipo.place(x=8, y=440,width=73)
 
     #llenar listas
     if type(directorios) == list:
@@ -120,9 +156,16 @@ def entrarEnDirectorio(directorio,ord="n"):
         abrir.destroy()
     for i in range(len(tamaños)):
         listaTamaño.insert(i,tamaños[i])
+    for i in range(len(extensiones)):
+        if os.path.isdir(os.path.join(os.getcwd(),extensiones[i])):
+            listaExtension.insert(i,"Carpeta")
+        else:
+            listaExtension.insert(i,"Archivo " + extensiones[i])
+
     lista.bind('<<ListboxSelect>>',CurSelet)
     lista.place(x=210,y=40)
     listaTamaño.place(x=470,y=40)
+    listaExtension.place(x=544,y=40)
     tk.Tk.report_callback_exception = show_error
 
 #GUI
