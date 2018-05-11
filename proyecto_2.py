@@ -4,6 +4,7 @@ from tkinter import *
 import tkinter as tk
 import stat
 from tkinter import messagebox
+import datetime
 
 def has_hidden_attribute(filepath):
     return bool(os.stat(filepath).st_file_attributes & stat.FILE_ATTRIBUTE_HIDDEN)
@@ -91,6 +92,21 @@ def obtenerExtensiones(directorios):
         resultado.append(extension)
     return resultado
 
+def get_fecha(path):
+    fecha = str(datetime.datetime.fromtimestamp(os.path.getmtime(path)))
+    año = fecha[:4]
+    mes = fecha[5:7]
+    dia = fecha[8:10]
+    return dia + "/" + mes + "/" + año
+
+def obtenerFechas(directorio):
+    resultado = []
+    for elemento in directorio:
+        file_path = os.path.join(os.getcwd(),elemento)
+        fecha = get_fecha(file_path)
+        resultado.append(str(fecha)[:10])
+    return resultado
+
 def entrarEnDirectorio(directorio,ord="n"):
     for child in cRight.winfo_children():#Borrar directorios anteriores de la ventana
         child.destroy()
@@ -105,13 +121,16 @@ def entrarEnDirectorio(directorio,ord="n"):
             directorios.sort(key = lambda k : k.lower())
 
         directorios = separarArchivosCarpetas(directorios)
+
     tamaños = obtenerTamaños(directorios)
     extensiones = obtenerExtensiones(directorios)
+    fechas = obtenerFechas(directorios)
 
     #listas de directorios,tamaños,etc
     lista = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=30,font=("Arial","12"))
     listaTamaño = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=8,font=("Arial","12"))
     listaExtension = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=10,font=("Arial","12"))
+    listaFechas = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=10,font=("Arial","12"))
     cwd = Label(cRight, text=os.getcwd(), bg="#ada6a6", font=("Arial", "12")).place(x=210, y=10)
     acciones = Label(cLeft, text="Acciones", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=70)
     ordenar = Label(cLeft, text="Ordenar por", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=345)
@@ -139,11 +158,11 @@ def entrarEnDirectorio(directorio,ord="n"):
     copiar.place(x=8,y=270,width=185)
     atras = Button(cLeft, text="Atrás", bg="#ada6a6",command=lambda: entrarEnDirectorio(directorioAnterior(os.getcwd())), font=("Arial", "12"))
     atras.place(x=8, y=305, width=185)
-    nombre = Button(cLeft,text="Nombre",bg="#ada6a6",command= lambda : entrarEnDirectorio(directorio),font=("Arial", "12"))
+    nombre = Button(cLeft,text="Nombre",bg="#ada6a6",font=("Arial", "12"))
     nombre.place(x=8,y=370,width=73)
-    tamaño = Button(cLeft, text="Tamaño", bg="#ada6a6",command= lambda : entrarEnDirectorio(directorio,"t"), font=("Arial", "12"))
+    tamaño = Button(cLeft, text="Tamaño", bg="#ada6a6", font=("Arial", "12"))
     tamaño.place(x=8, y=405,width=73)
-    tipo = Button(cLeft, text="Tipo", bg="#ada6a6",command= lambda : entrarEnDirectorio(directorio,""), font=("Arial", "12"))
+    tipo = Button(cLeft, text="Tipo", bg="#ada6a6", font=("Arial", "12"))
     tipo.place(x=8, y=440,width=73)
 
     #llenar listas
@@ -161,11 +180,14 @@ def entrarEnDirectorio(directorio,ord="n"):
             listaExtension.insert(i,"Carpeta")
         else:
             listaExtension.insert(i,"Archivo " + extensiones[i])
+    for i in range(len(fechas)):
+        listaFechas.insert(i,fechas[i])
 
     lista.bind('<<ListboxSelect>>',CurSelet)
     lista.place(x=210,y=40)
     listaTamaño.place(x=470,y=40)
-    listaExtension.place(x=544,y=40)
+    listaExtension.place(x=543,y=40)
+    listaFechas.place(x=630,y=40)
     tk.Tk.report_callback_exception = show_error
 
 #GUI
