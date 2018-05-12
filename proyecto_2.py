@@ -107,6 +107,11 @@ def obtenerFechas(directorio):
         resultado.append(str(fecha)[:10])
     return resultado
 
+def MouseWheel(event,arg):
+    for lista in arg:
+        lista.yview("scroll",-(event.delta),"units")
+    return "break"
+
 def entrarEnDirectorio(directorio,ord="n"):
     for child in cRight.winfo_children():#Borrar directorios anteriores de la ventana
         child.destroy()
@@ -183,11 +188,17 @@ def entrarEnDirectorio(directorio,ord="n"):
     for i in range(len(fechas)):
         listaFechas.insert(i,fechas[i])
 
+    listas = [lista,listaTamaño,listaExtension,listaFechas]
     lista.bind('<<ListboxSelect>>',CurSelet)
+    lista.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
+    listaTamaño.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
+    listaExtension.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
+    listaFechas.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
     lista.place(x=210,y=40)
     listaTamaño.place(x=470,y=40)
     listaExtension.place(x=543,y=40)
     listaFechas.place(x=630,y=40)
+    lista.select_clear(0,END)
     tk.Tk.report_callback_exception = show_error
 
 #GUI
