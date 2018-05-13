@@ -9,7 +9,7 @@ import datetime
 def has_hidden_attribute(filepath):
     return bool(os.stat(filepath).st_file_attributes & stat.FILE_ATTRIBUTE_HIDDEN)
 
-def noHiddenDir():
+def noHiddenDir(): #función para eliminar directorios ocultos
     try:
         dir = os.listdir()
         hidden = []
@@ -22,7 +22,7 @@ def noHiddenDir():
     except:
         return "Acceso denegado"
 
-def CurSelet(event):
+def CurSelet(event): #funcion para la selección actual en las listboxes
     try:
         widget = event.widget
         value = str((widget.get(widget.curselection())))
@@ -30,10 +30,10 @@ def CurSelet(event):
     except:
         pass
 
-def show_error(self, *args):
-    messagebox.showerror('Exception',"No ha seleccionado nada")
+def show_error(self, *args): #muestra una ventana para las excepciones de tkinter
+    messagebox.showerror('Error',"No ha seleccionado una carpeta")
 
-def convert_bytes(num):
+def convert_bytes(num): #hace una conversion de bytes hasta su máxima expresión
     for x in ['B', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
@@ -45,7 +45,7 @@ def ejecutarArchivo(archivo):
     else:
         messagebox.showinfo("Error","No ha seleccionado un archivo")
 
-def file_size(file_path):
+def get_size(file_path):
     if os.path.isfile(file_path):
         file_info = os.stat(file_path)
         return convert_bytes(file_info.st_size)
@@ -56,7 +56,7 @@ def obtenerTamaños(directorios):
     resultado = []
     for elemento in directorios:
         path = os.path.join(os.getcwd(),elemento)
-        size = file_size(path)
+        size = get_size(path)
         resultado.append(size)
     return resultado
 
@@ -75,14 +75,6 @@ def get_extension(path):
     except:
         extention = ""
     return extention
-
-def directorioAnterior(path):
-    slash = 0
-    for i in range(len(path)):
-        if path[i] == "\\":
-            slash = i
-    newPath = path[:slash]
-    return newPath
 
 def obtenerExtensiones(directorios):
     resultado = []
@@ -107,7 +99,15 @@ def obtenerFechas(directorio):
         resultado.append(str(fecha)[:10])
     return resultado
 
-def MouseWheel(event,arg):
+def directorioAnterior(path):
+    slash = 0
+    for i in range(len(path)):
+        if path[i] == "\\":
+            slash = i
+    newPath = path[:slash]
+    return newPath
+
+def MouseWheel(event,arg): #Función para añadir la función de scroll
     for lista in arg:
         lista.yview("scroll",-(event.delta),"units")
     return "break"
@@ -121,31 +121,27 @@ def entrarEnDirectorio(directorio,ord="n"):
         messagebox.showinfo("Error","No ha seleccionado una carpeta")
 
     directorios = noHiddenDir()
-    if type(directorios) == list: #ordenar directorios
-        if ord == "n":
+    if type(directorios) == list:
+        if ord == "n":#ordenar directorios alfabeticamente
             directorios.sort(key = lambda k : k.lower())
 
         directorios = separarArchivosCarpetas(directorios)
 
-    tamaños = obtenerTamaños(directorios)
-    extensiones = obtenerExtensiones(directorios)
-    fechas = obtenerFechas(directorios)
+    if type(directorios) == list: #listas con todos los tamaños,extensiones y fechas
+        tamaños = obtenerTamaños(directorios)
+        extensiones = obtenerExtensiones(directorios)
+        fechas = obtenerFechas(directorios)
 
-    #listas de directorios,tamaños,etc
-    lista = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=30,font=("Arial","12"))
+    #listboxes de directorios,tamaños,etc
+    lista = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=47,font=("Arial","12"))
     listaTamaño = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=8,font=("Arial","12"))
     listaExtension = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=10,font=("Arial","12"))
     listaFechas = Listbox(cRight,height=34,fg="black",bg="#ada6a6",bd=0,width=10,font=("Arial","12"))
+
+    #textos
     cwd = Label(cRight, text=os.getcwd(), bg="#ada6a6", font=("Arial", "12")).place(x=210, y=10)
     acciones = Label(cLeft, text="Acciones", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=70)
     ordenar = Label(cLeft, text="Ordenar por", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=345)
-    scroll = Scrollbar(cRight, orient=VERTICAL)
-    scroll.pack(side=RIGHT, fill=Y)
-    lista.config(yscrollcommand=scroll.set)
-    listaTamaño.config(yscrollcommand=scroll.set)
-
-    scroll = Scrollbar(cRight, orient=VERTICAL)
-    scroll.config(command = lista.yview())
 
     #Botones de acciones y ordenamientos
     ejecutar = Button(cLeft,text="Ejecutar archivo",bg="#ada6a6",command = lambda: ejecutarArchivo(os.path.join(os.getcwd()
@@ -170,24 +166,24 @@ def entrarEnDirectorio(directorio,ord="n"):
     tipo = Button(cLeft, text="Tipo", bg="#ada6a6", font=("Arial", "12"))
     tipo.place(x=8, y=440,width=73)
 
-    #llenar listas
+    #llenar listboxes
     if type(directorios) == list:
         for i in range(len(directorios)):
             lista.insert(i,directorios[i])
             abrir.place(x=8, y=95,width=185)
+        for i in range(len(tamaños)):
+            listaTamaño.insert(i," " + tamaños[i])
+        for i in range(len(extensiones)):
+            if os.path.isdir(os.path.join(os.getcwd(),extensiones[i])):
+                listaExtension.insert(i," " + "Carpeta")
+            else:
+                listaExtension.insert(i," " + "Archivo " + extensiones[i])
+        for i in range(len(fechas)):
+            listaFechas.insert(i," " + fechas[i])
     else:
         lista.insert(1,directorios)
         abrir.destroy()
-    for i in range(len(tamaños)):
-        listaTamaño.insert(i,tamaños[i])
-    for i in range(len(extensiones)):
-        if os.path.isdir(os.path.join(os.getcwd(),extensiones[i])):
-            listaExtension.insert(i,"Carpeta")
-        else:
-            listaExtension.insert(i,"Archivo " + extensiones[i])
-    for i in range(len(fechas)):
-        listaFechas.insert(i,fechas[i])
-
+    
     listas = [lista,listaTamaño,listaExtension,listaFechas]
     lista.bind('<<ListboxSelect>>',CurSelet)
     lista.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
@@ -195,13 +191,12 @@ def entrarEnDirectorio(directorio,ord="n"):
     listaExtension.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
     listaFechas.bind('<MouseWheel>',lambda event, arg = listas: MouseWheel(event,arg))
     lista.place(x=210,y=40)
-    listaTamaño.place(x=470,y=40)
-    listaExtension.place(x=543,y=40)
-    listaFechas.place(x=630,y=40)
-    lista.select_clear(0,END)
-    tk.Tk.report_callback_exception = show_error
+    listaTamaño.place(x=631,y=40)
+    listaExtension.place(x=704,y=40)
+    listaFechas.place(x=795,y=40)
+    tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
 
-#GUI
+#GUI principal
 root = tk.Tk()
 root.minsize(height=700,width=900)
 root.resizable(width=False,height=False)
