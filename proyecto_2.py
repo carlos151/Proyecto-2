@@ -43,7 +43,7 @@ def ejecutarArchivo(archivo):
     if os.path.isfile(archivo):
         os.startfile(archivo)
     else:
-        messagebox.showinfo("Error","No ha seleccionado un archivo")
+        messagebox.showerror("Error","No ha seleccionado un archivo")
 
 def get_size(file_path):
     if os.path.isfile(file_path):
@@ -112,6 +112,54 @@ def MouseWheel(event,arg): #Función para añadir la función de scroll
         lista.yview("scroll",-(event.delta),"units")
     return "break"
 
+def checkNombreAux(nombre):
+    especiales = '><:"\\/|?¿*!¡'
+    for char in nombre:
+        for elemento in especiales:
+            if char == elemento:
+                return False
+    return True
+
+def checkNombre(nombre):
+    if len(nombre) > 64:
+        messagebox.showerror("Error","El nombre no puede exceder los 64 caracteres")
+    elif not checkNombreAux(nombre):
+        messagebox.showerror("Error", "El nombre no puede contener caracteres especiales")
+    else:
+        return True
+
+def crearDirectorioAux(destino,nombre):
+    if checkNombre(nombre.lower()):
+        try:
+            os.chdir(destino)
+            path = os.path.join(destino,nombre)
+            if not os.path.exists(path):
+                os.makedirs(path)
+                messagebox.showinfo("Listo","Carpeta creada")
+            else:
+                messagebox.showerror("Error","La carpeta ya existe")
+        except:
+            messagebox.showerror("Error", "Destino inválido")
+
+def crearDirectorio():
+    ventana = tk.Tk()
+    ventana.minsize(height=150, width=500)
+    ventana.resizable(width=False, height=False)
+    ventana.title("Crear directorio")
+    color = Canvas(ventana,bg="#ada6a6",height=150, width=500).pack()
+    destino = Label(ventana,text="Destino", bg="#ada6a6", font=("Arial", "12")).place(x=8,y=30)
+    nombre = Label(ventana,text="Nombre", bg="#ada6a6", font=("Arial", "12")).place(x=8,y=65)
+    directorioActual = Button(ventana,text="Directorio actual",bg="#ada6a6", font=("Arial", "12"),height=2)
+    destinoEntry = Entry(ventana,bg="#ada6a6",width=48)
+    destinoEntry.place(x=70,y=33)
+    nombreEntry = Entry(ventana,bg="#ada6a6",width=48)
+    nombreEntry.place(x=70,y=68)
+    crear = Button(ventana,text="Crear",bg="#ada6a6", font=("Arial", "12"))
+    directorioActual.config(command=lambda: destinoEntry.insert(0,os.getcwd()))
+    crear.config(command=lambda: crearDirectorioAux(destinoEntry.get(),nombreEntry.get()))
+    directorioActual.place(x=368,y=34)
+    crear.place(x=220,y=105)
+
 def entrarEnDirectorio(directorio,ord="n"):
     for child in cRight.winfo_children():#Borrar directorios anteriores de la ventana
         child.destroy()
@@ -149,7 +197,7 @@ def entrarEnDirectorio(directorio,ord="n"):
     ejecutar.place(x=8, y=128,width=185)
     abrir = Button(cLeft,text="Abrir carpeta",bg="#ada6a6",command = lambda: entrarEnDirectorio(os.path.join(os.getcwd()
     ,lista.get("active"))), font=("Arial", "12"))
-    crearDir = Button(cLeft,text="Crear directorio",bg="#ada6a6",font=("Arial", "12"))
+    crearDir = Button(cLeft,text="Crear directorio",bg="#ada6a6",command=lambda: crearDirectorio(),font=("Arial", "12"))
     crearDir.place(x=8,y=163,width=185)
     consultarInfo = Button(cLeft,text="Consultar información",bg="#ada6a6",font=("Arial", "12"))
     consultarInfo.place(x=8,y=198,width=185)
@@ -180,6 +228,7 @@ def entrarEnDirectorio(directorio,ord="n"):
                 listaExtension.insert(i," " + "Archivo " + extensiones[i])
         for i in range(len(fechas)):
             listaFechas.insert(i," " + fechas[i])
+
     else:
         lista.insert(1,directorios)
         abrir.destroy()
@@ -194,7 +243,7 @@ def entrarEnDirectorio(directorio,ord="n"):
     listaTamaño.place(x=631,y=40)
     listaExtension.place(x=704,y=40)
     listaFechas.place(x=795,y=40)
-    tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
+    #tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
 
 #GUI principal
 root = tk.Tk()
@@ -204,12 +253,12 @@ root.title("File Explorer")
 
 cRight = Canvas(root,bg="#ada6a6",width=700)
 cRight.place(width=900,height=700)
-cLeft = Canvas(root,bg="#ada6a6",width=200).place(width=200,height=700)
+cLeft = Canvas(root,bg="#ada6a6",width=200)
+cLeft.place(width=200,height=700)
 unidadesLogicas = Label(cLeft,text="Unidades lógicas",bg="#ada6a6",font=("Arial","12")).place(x=5,y=10)
 homeBoton= Button(cLeft,text="C:\\",bg="#ada6a6",command= lambda: entrarEnDirectorio("C:\\"),font=("Arial","12")).place(x=8,y=35,height=30)
 if os.listdir("D:\\"):
     botonD = Button(cLeft,text="D:\\",bg="#ada6a6",command= lambda: entrarEnDirectorio("D:\\"),font=("Arial","12")).place(x=48,y=35,height=30)
 propiedades = Button(cLeft,text="Propiedades",bg="#ada6a6",font=("Arial", "12")).place(x=88,y=35,height=30)
-
 
 root.mainloop()
