@@ -46,18 +46,18 @@ def ejecutarArchivo(archivo):
         messagebox.showerror("Error","No ha seleccionado un archivo")
 
 def get_size(file_path):
-    if os.path.isfile(file_path):
-        file_info = os.stat(file_path)
-        return convert_bytes(file_info.st_size)
-    else:
-        return " "
+    file_info = os.stat(file_path)
+    return convert_bytes(file_info.st_size)
 
 def obtenerTamaños(directorios):
     resultado = []
     for elemento in directorios:
         path = os.path.join(os.getcwd(),elemento)
-        size = get_size(path)
-        resultado.append(size)
+        if os.path.isfile(path):
+            size = get_size(path)
+            resultado.append(size)
+        else:
+            resultado.append("")
     return resultado
 
 def separarArchivosCarpetas(directorios):
@@ -85,7 +85,7 @@ def obtenerExtensiones(directorios):
     return resultado
 
 def get_fecha(path):
-    fecha = str(datetime.datetime.fromtimestamp(os.path.getmtime(path)))
+    fecha = str(datetime.datetime.fromtimestamp(os.path.getctime(path)))
     año = fecha[:4]
     mes = fecha[5:7]
     dia = fecha[8:10]
@@ -160,6 +160,62 @@ def crearDirectorio():
     directorioActual.place(x=368,y=34)
     crear.place(x=220,y=105)
 
+def get_size_carpeta(root):
+    size = 0
+    for path, dirs, files in os.walk(root):
+        for f in files:
+            size +=  os.path.getsize( os.path.join( path, f ) )
+    return size
+
+def contenidoCarpeta(path):
+    archivos = 0
+    carpetas = 0
+    for path, dirs, files in os.walk(path):
+        for f in files:
+            archivos += 1
+        for i in dirs:
+            carpetas += 1
+    return [archivos,carpetas]
+
+def consultarInfoArchivo(path):
+    ventana = tk.Tk()
+    ventana.minsize(height=500, width=400)
+    ventana.resizable(width=False, height=False)
+    ventana.title("Propiedades")
+    color = Canvas(ventana, bg="#ada6a6", height=45, width=400).pack()
+    colorBot = Canvas(ventana,bg="#ada6a6",height=455,width=400).pack()
+
+    props = Label(ventana, text="Propiedades de " + os.path.basename(path), bg="#ada6a6", font=("Arial", "12")).place(x=10, y=11)
+
+def consultarInfoCarpeta(path):
+    ventana = tk.Tk()
+    ventana.minsize(height=500, width=400)
+    ventana.resizable(width=False, height=False)
+    ventana.title("Propiedades")
+    color = Canvas(ventana, bg="#ada6a6", height=45, width=400).pack()
+    colorBot = Canvas(ventana, bg="#ada6a6", height=455, width=400).pack()
+
+    size = convert_bytes(get_size_carpeta(path))
+    contenidos = contenidoCarpeta(path)
+    contenidosAux = str(contenidos[0]) + " archivos, " + str(contenidos[1]) + " carpetas"
+    atributosAux = os.stat(path).st_file_attributes
+    print(atributosAux)
+
+    #textos
+    props = Label(ventana,text="Propiedades de " + os.path.basename(path),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=11)
+    tipo = Label(ventana,text="Tipo: Carpeta de archivos",bg="#ada6a6", font=("Arial", "12")).place(x=10,y=61)
+    ubicacion = Label(ventana,text="Ubicación: " + path,bg="#ada6a6", font=("Arial", "12")).place(x=10,y=91)
+    tamaño = Label(ventana,text="Tamaño: " + str(size),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=121)
+    contiene = Label(ventana,text="Contiene: " + contenidosAux,bg="#ada6a6", font=("Arial", "12")).place(x=10,y=151)
+    creado = Label(ventana,text="Fecha de creación: " + get_fecha(path),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=181)
+    atributos = Label(ventana,text="Atributos: ",bg="#ada6a6", font=("Arial", "12")).place(x=10,y=211)
+
+def consultarInformacion(path):
+    if os.path.isfile(path):
+        consultarInfoArchivo(path)
+    else:
+        consultarInfoCarpeta(path)
+
 def entrarEnDirectorio(directorio,ord="n"):
     for child in cRight.winfo_children():#Borrar directorios anteriores de la ventana
         child.destroy()
@@ -200,6 +256,7 @@ def entrarEnDirectorio(directorio,ord="n"):
     crearDir = Button(cLeft,text="Crear directorio",bg="#ada6a6",command=lambda: crearDirectorio(),font=("Arial", "12"))
     crearDir.place(x=8,y=163,width=185)
     consultarInfo = Button(cLeft,text="Consultar información",bg="#ada6a6",font=("Arial", "12"))
+    consultarInfo.config(command=lambda : consultarInformacion(os.path.join(os.getcwd(),lista.get("active"))))
     consultarInfo.place(x=8,y=198,width=185)
     eliminar = Button(cLeft,text="Eliminar",bg="#ada6a6",font=("Arial", "12"))
     eliminar.place(x=8,y=234,width=185)
