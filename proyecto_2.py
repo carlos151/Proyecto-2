@@ -189,17 +189,15 @@ def consultarInfoArchivo(path):
 
 def consultarInfoCarpeta(path):
     ventana = tk.Tk()
-    ventana.minsize(height=500, width=400)
+    ventana.minsize(height=220, width=400)
     ventana.resizable(width=False, height=False)
     ventana.title("Propiedades")
     color = Canvas(ventana, bg="#ada6a6", height=45, width=400).pack()
-    colorBot = Canvas(ventana, bg="#ada6a6", height=455, width=400).pack()
+    colorBot = Canvas(ventana, bg="#ada6a6", height=175, width=400).pack()
 
     size = convert_bytes(get_size_carpeta(path))
     contenidos = contenidoCarpeta(path)
     contenidosAux = str(contenidos[0]) + " archivos, " + str(contenidos[1]) + " carpetas"
-    atributosAux = os.stat(path).st_file_attributes
-    print(atributosAux)
 
     #textos
     props = Label(ventana,text="Propiedades de " + os.path.basename(path),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=11)
@@ -208,7 +206,6 @@ def consultarInfoCarpeta(path):
     tamaño = Label(ventana,text="Tamaño: " + str(size),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=121)
     contiene = Label(ventana,text="Contiene: " + contenidosAux,bg="#ada6a6", font=("Arial", "12")).place(x=10,y=151)
     creado = Label(ventana,text="Fecha de creación: " + get_fecha(path),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=181)
-    atributos = Label(ventana,text="Atributos: ",bg="#ada6a6", font=("Arial", "12")).place(x=10,y=211)
 
 def consultarInformacion(path):
     if os.path.isfile(path):
