@@ -164,7 +164,10 @@ def get_size_carpeta(root):
     size = 0
     for path, dirs, files in os.walk(root):
         for f in files:
-            size +=  os.path.getsize( os.path.join( path, f ) )
+            try:
+                size +=  os.path.getsize( os.path.join( path, f ) )
+            except FileNotFoundError and OSError:
+                continue
     return size
 
 def contenidoCarpeta(path):
