@@ -5,6 +5,7 @@ import tkinter as tk
 import stat
 from tkinter import messagebox
 import datetime
+import shutil
 
 def has_hidden_attribute(filepath):
     return bool(os.stat(filepath).st_file_attributes & stat.FILE_ATTRIBUTE_HIDDEN)
@@ -128,7 +129,7 @@ def checkNombre(nombre):
     else:
         return True
 
-def crearDirectorioAux(destino,nombre):
+def crearDirectorioAux(destino,nombre,ventana):
     if checkNombre(nombre.lower()):
         try:
             os.chdir(destino)
@@ -136,8 +137,10 @@ def crearDirectorioAux(destino,nombre):
             if not os.path.exists(path):
                 os.makedirs(path)
                 messagebox.showinfo("Listo","Carpeta creada")
+                ventana.destroy()
             else:
                 messagebox.showerror("Error","La carpeta ya existe")
+                ventana.destroy()
         except:
             messagebox.showerror("Error", "Destino inválido")
 
@@ -156,9 +159,10 @@ def crearDirectorio():
     nombreEntry.place(x=70,y=68)
     crear = Button(ventana,text="Crear",bg="#ada6a6", font=("Arial", "12"))
     directorioActual.config(command=lambda: destinoEntry.insert(0,os.getcwd()))
-    crear.config(command=lambda: crearDirectorioAux(destinoEntry.get(),nombreEntry.get()))
+    crear.config(command=lambda: crearDirectorioAux(destinoEntry.get(),nombreEntry.get(),ventana))
     directorioActual.place(x=368,y=34)
     crear.place(x=220,y=105)
+    ventana.mainloop()
 
 def get_size_carpeta(root):
     size = 0
@@ -189,7 +193,7 @@ def consultarInfoArchivo(path):
     colorBot = Canvas(ventana,bg="#ada6a6",height=455,width=400).pack()
 
     props = Label(ventana, text="Propiedades de " + os.path.basename(path), bg="#ada6a6", font=("Arial", "12")).place(x=10, y=11)
-
+    ventana.mainloop()
 def consultarInfoCarpeta(path):
     ventana = tk.Tk()
     ventana.minsize(height=220, width=400)
@@ -209,12 +213,46 @@ def consultarInfoCarpeta(path):
     tamaño = Label(ventana,text="Tamaño: " + str(size),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=121)
     contiene = Label(ventana,text="Contiene: " + contenidosAux,bg="#ada6a6", font=("Arial", "12")).place(x=10,y=151)
     creado = Label(ventana,text="Fecha de creación: " + get_fecha(path),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=181)
+    ventana.mainloop()
 
 def consultarInformacion(path):
     if os.path.isfile(path):
         consultarInfoArchivo(path)
     else:
         consultarInfoCarpeta(path)
+
+def eliminarAux(path,ventana):
+    if os.path.isfile(path):
+        try:
+            os.remove(path)
+            messagebox.showinfo("Éxito", "Archivo borrado con éxito")
+        except:
+            messagebox.showerror("Error", "No tiene permisos para borrar este archivo")
+    elif os.path.isdir(path):
+        try:
+            shutil.rmtree(path)
+            messagebox.showinfo("Éxito", "Carpeta borrada con éxito")
+        except:
+            messagebox.showerror("Error", "No tiene permisos para borrar este archivo")
+    else:
+        messagebox.showerror("Error","Hubo un error")
+    ventana.destroy()
+
+def eliminarFuncion(path):
+    ventana = tk.Tk()
+    ventana.minsize(height=100, width=330)
+    ventana.resizable(height=False,width=False)
+    ventana.title("Eliminar")
+    c = Canvas(ventana,bg="#ada6a6",height=100,width=330).pack()
+    if os.path.isfile(path):
+        tipo = "el archivo?"
+    else:
+        tipo = "la carpeta?"
+    mensaje = Label(ventana,text="¿Está seguro que quiere eliminar " + tipo,font=("Arial","12"),bg="#ada6a6").place(x=10,y=15)
+    si = Button(ventana,text="Si",bg="#ada6a6",font=("Arial","12"),command=lambda:eliminarAux(path,ventana)).place(x=35,y=60,width=120)
+    no = Button(ventana,text="No",bg="#ada6a6",font=("Arial","12"),command=lambda:ventana.destroy()).place(x=180,y=60,width=120)
+
+    ventana.mainloop()
 
 def entrarEnDirectorio(directorio,ord="n"):
     for child in cRight.winfo_children():#Borrar directorios anteriores de la ventana
@@ -245,7 +283,7 @@ def entrarEnDirectorio(directorio,ord="n"):
     #textos
     cwd = Label(cRight, text=os.getcwd(), bg="#ada6a6", font=("Arial", "12")).place(x=210, y=10)
     acciones = Label(cLeft, text="Acciones", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=70)
-    ordenar = Label(cLeft, text="Ordenar por", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=345)
+    ordenar = Label(cLeft, text="Ordenar por", bg="#ada6a6", font=("Arial", "12")).place(x=6, y=380)
 
     #Botones de acciones y ordenamientos
     ejecutar = Button(cLeft,text="Ejecutar archivo",bg="#ada6a6",command = lambda: ejecutarArchivo(os.path.join(os.getcwd()
@@ -258,18 +296,20 @@ def entrarEnDirectorio(directorio,ord="n"):
     consultarInfo = Button(cLeft,text="Consultar información",bg="#ada6a6",font=("Arial", "12"))
     consultarInfo.config(command=lambda : consultarInformacion(os.path.join(os.getcwd(),lista.get("active"))))
     consultarInfo.place(x=8,y=198,width=185)
-    eliminar = Button(cLeft,text="Eliminar",bg="#ada6a6",font=("Arial", "12"))
+    eliminar = Button(cLeft,text="Eliminar",bg="#ada6a6",font=("Arial", "12"),command=lambda: eliminarFuncion(lista.get('active')))
     eliminar.place(x=8,y=234,width=185)
     copiar = Button(cLeft,text="Copiar",bg="#ada6a6",font=("Arial", "12"))
     copiar.place(x=8,y=270,width=185)
+    pegar = Button(cLeft,text="Pegar",bg="#ada6a6",font=("Arial", "12"))
+    pegar.place(x=8,y=305,width=185)
     atras = Button(cLeft, text="Atrás", bg="#ada6a6",command=lambda: entrarEnDirectorio(directorioAnterior(os.getcwd())), font=("Arial", "12"))
-    atras.place(x=8, y=305, width=185)
+    atras.place(x=8, y=340, width=185)
     nombre = Button(cLeft,text="Nombre",bg="#ada6a6",font=("Arial", "12"))
-    nombre.place(x=8,y=370,width=73)
+    nombre.place(x=8,y=405,width=73)
     tamaño = Button(cLeft, text="Tamaño", bg="#ada6a6", font=("Arial", "12"))
-    tamaño.place(x=8, y=405,width=73)
+    tamaño.place(x=8, y=440,width=73)
     tipo = Button(cLeft, text="Tipo", bg="#ada6a6", font=("Arial", "12"))
-    tipo.place(x=8, y=440,width=73)
+    tipo.place(x=8, y=475,width=73)
 
     #llenar listboxes
     if type(directorios) == list:
