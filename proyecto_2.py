@@ -340,7 +340,7 @@ def entrarEnDirectorio(directorio,ord="n"):
     listaTamaño.place(x=631,y=40)
     listaExtension.place(x=704,y=40)
     listaFechas.place(x=795,y=40)
-    #tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
+    tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
 
 #GUI principal
 root = tk.Tk()
@@ -354,8 +354,11 @@ cLeft = Canvas(root,bg="#ada6a6",width=200)
 cLeft.place(width=200,height=700)
 unidadesLogicas = Label(cLeft,text="Unidades lógicas",bg="#ada6a6",font=("Arial","12")).place(x=5,y=10)
 homeBoton= Button(cLeft,text="C:\\",bg="#ada6a6",command= lambda: entrarEnDirectorio("C:\\"),font=("Arial","12")).place(x=8,y=35,height=30)
-if os.listdir("D:\\"):
+try:
+    os.listdir("D:\\")
     botonD = Button(cLeft,text="D:\\",bg="#ada6a6",command= lambda: entrarEnDirectorio("D:\\"),font=("Arial","12")).place(x=48,y=35,height=30)
+except:
+    pass
 propiedades = Button(cLeft,text="Propiedades",bg="#ada6a6",font=("Arial", "12")).place(x=88,y=35,height=30)
 
 root.mainloop()
