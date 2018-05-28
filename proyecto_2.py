@@ -6,6 +6,7 @@ import stat
 from tkinter import messagebox
 import datetime
 import shutil
+from shutil import copyfile
 
 def has_hidden_attribute(filepath):
     return bool(os.stat(filepath).st_file_attributes & stat.FILE_ATTRIBUTE_HIDDEN)
@@ -186,14 +187,23 @@ def contenidoCarpeta(path):
 
 def consultarInfoArchivo(path):
     ventana = tk.Tk()
-    ventana.minsize(height=500, width=400)
+    ventana.minsize(height=220, width=400)
     ventana.resizable(width=False, height=False)
     ventana.title("Propiedades")
     color = Canvas(ventana, bg="#ada6a6", height=45, width=400).pack()
-    colorBot = Canvas(ventana,bg="#ada6a6",height=455,width=400).pack()
+    colorBot = Canvas(ventana,bg="#ada6a6",height=175,width=400).pack()
 
+    size = get_size(path)
+    extension = get_extension(path)
+
+    #Textos
+    extensionText = Label(ventana,text="Tipo: Archivo" + extension,bg="#ada6a6", font=("Arial", "12")).place(x=10,y=61)
+    tamaño = Label(ventana,text="Tamaño: " + size,bg="#ada6a6", font=("Arial", "12")).place(x=10,y=91)
+    ubicacion = Label(ventana, text="Ubicación: " + path, bg="#ada6a6", font=("Arial", "12")).place(x=10,y=121)
+    fecha = Label(ventana,text="Fecha: " + get_fecha(path),bg="#ada6a6", font=("Arial", "12")).place(x=10,y=151)
     props = Label(ventana, text="Propiedades de " + os.path.basename(path), bg="#ada6a6", font=("Arial", "12")).place(x=10, y=11)
     ventana.mainloop()
+
 def consultarInfoCarpeta(path):
     ventana = tk.Tk()
     ventana.minsize(height=220, width=400)
@@ -220,6 +230,44 @@ def consultarInformacion(path):
         consultarInfoArchivo(path)
     else:
         consultarInfoCarpeta(path)
+
+def guardarDireccion(direccion):
+    archivo = open(os.path.join(direccionArchivo,"direccion.txt"), "a")
+    archivo.write(direccion)
+    #raise PermissionError(messagebox.showerror("Error", "No tiene permisos para copiar"))
+    archivo.close()
+
+def pegarArchivoAux(src,destino):
+    if src == "":
+        messagebox.showerror("Error","No ha seleccionado nada para copiar")
+    else:
+        try:
+            shutil.copy2(src, destino)
+        except PermissionError:
+            messagebox.showerror("Error", "No tiene permisos para pegar aquí")
+
+
+def pegarArchivo(dst, symlinks=False, ignore=None):
+    archivo = open(os.path.join(direccionArchivo, "direccion.txt"), "r")
+    src = archivo.read()
+    if src == "":
+        messagebox.showerror("Error","No ha seleccionado nada para copiar")
+    else:
+        if os.path.isfile(src):
+            pegarArchivoAux(src,dst)
+        else:
+            try:
+                for item in os.listdir(src):
+                    s = os.path.join(src, item)
+                    d = os.path.join(dst, item)
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d, symlinks, ignore)
+                    else:
+                        shutil.copy2(s, d)
+            except PermissionError:
+                messagebox.showerror("Error", "No tiene permisos para pegar aquí")
+    archivo.close()
+    os.remove(os.path.join(direccionArchivo, "direccion.txt"))
 
 def eliminarAux(path,ventana):
     if os.path.isfile(path):
@@ -298,15 +346,15 @@ def entrarEnDirectorio(directorio,ord="n"):
     consultarInfo.place(x=8,y=198,width=185)
     eliminar = Button(cLeft,text="Eliminar",bg="#ada6a6",font=("Arial", "12"),command=lambda: eliminarFuncion(lista.get('active')))
     eliminar.place(x=8,y=234,width=185)
-    copiar = Button(cLeft,text="Copiar",bg="#ada6a6",font=("Arial", "12"))
+    copiar = Button(cLeft,text="Copiar",bg="#ada6a6",font=("Arial", "12"),command = lambda : guardarDireccion(os.path.join(os.getcwd(),lista.get("active"))))
     copiar.place(x=8,y=270,width=185)
-    pegar = Button(cLeft,text="Pegar",bg="#ada6a6",font=("Arial", "12"))
+    pegar = Button(cLeft,text="Pegar",bg="#ada6a6",font=("Arial", "12"),command = lambda : pegarArchivo(os.getcwd()))
     pegar.place(x=8,y=305,width=185)
     atras = Button(cLeft, text="Atrás", bg="#ada6a6",command=lambda: entrarEnDirectorio(directorioAnterior(os.getcwd())), font=("Arial", "12"))
     atras.place(x=8, y=340, width=185)
-    nombre = Button(cLeft,text="Nombre",bg="#ada6a6",font=("Arial", "12"))
+    nombre = Button(cLeft,text="Nombre",bg="#ada6a6",font=("Arial", "12"),command = lambda: entrarEnDirectorio(os.getcwd(),"n"))
     nombre.place(x=8,y=405,width=73)
-    tamaño = Button(cLeft, text="Tamaño", bg="#ada6a6", font=("Arial", "12"))
+    tamaño = Button(cLeft, text="Tamaño", bg="#ada6a6", font=("Arial", "12"),command = lambda: entrarEnDirectorio(os.getcwd(),"s"))
     tamaño.place(x=8, y=440,width=73)
     tipo = Button(cLeft, text="Tipo", bg="#ada6a6", font=("Arial", "12"))
     tipo.place(x=8, y=475,width=73)
@@ -340,7 +388,7 @@ def entrarEnDirectorio(directorio,ord="n"):
     listaTamaño.place(x=631,y=40)
     listaExtension.place(x=704,y=40)
     listaFechas.place(x=795,y=40)
-    tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
+    #tk.Tk.report_callback_exception = show_error #Atrapa las excepciones de tkinter
 
 #GUI principal
 root = tk.Tk()
@@ -360,5 +408,9 @@ try:
 except:
     pass
 propiedades = Button(cLeft,text="Propiedades",bg="#ada6a6",font=("Arial", "12")).place(x=88,y=35,height=30)
+
+nArchivo = open("direccion.txt", "w")
+nArchivo.close()
+direccionArchivo = os.getcwd()
 
 root.mainloop()
